@@ -1,0 +1,5 @@
+ext {
+    cdvMinSdkVersion = rootProject.ext.minSdkVersion
+    cdvCompileSdkVersion = rootProject.ext.compileSdkVersion
+    cdvTargetSdkVersion = rootProject.ext.targetSdkVersion
+}

@@ -1,0 +1,19 @@
+{
+  "name": "calculadora-longaniza",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Calculadora de Longaniza empaquetada para Android con Capacitor.",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "cap:sync": "npm run build && npx cap sync android",
+    "android:debug": "npm run cap:sync && gradle -p android assembleDebug",
+    "test": "node tests/app.test.js && node tests/android-packaging.test.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}

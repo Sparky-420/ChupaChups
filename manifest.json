@@ -2,10 +2,10 @@
   "name": "Calculadora de Longaniza",
   "short_name": "Calculadora",
   "description": "Calculadora para recetas de longaniza.",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f7f7f7",
-  "theme_color": "#ffffff",
+  "theme_color": "#8f1d1d",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -18,5 +18,6 @@
       "type": "image/png",
       "sizes": "512x512"
     }
-  ]
+  ],
+  "scope": "./"
 }
