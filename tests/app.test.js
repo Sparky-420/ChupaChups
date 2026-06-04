@@ -62,8 +62,22 @@ function includesAll(text, snippets) {
     snippets.forEach((snippet) => assert.ok(text.includes(snippet), `Falta "${snippet}" en el resultado.`));
 }
 
+function assertResultRow(html, name, percentageOrDose, kilograms, grams) {
+    const row = `<tr><td>${name}</td><td>${percentageOrDose}</td><td>${kilograms}</td><td>${grams}</td></tr>`;
+    assert.ok(html.includes(row), `No se encontró la fila esperada: ${row}`);
+}
+
 {
     const { context, elements, getServiceWorkerRegistration } = makeApp('{json inválido');
+    assert.equal(elements.receta_select.value, 'cagada');
+    assert.equal(elements.tu_guajillo.value, '1.5');
+    assert.equal(elements.tu_pimenton.value, '0.4');
+    assert.equal(elements.tu_especias.value, '0.6');
+    assert.equal(elements.tu_ajo.value, '0.6');
+    assert.notEqual(elements.tu_ajo.value, '6');
+    assert.notEqual(elements.tu_ajo.value, '0.5');
+    assert.equal(elements.agua_ratio.value, '5');
+    assert.equal(elements.dosis_premix.value, '17');
     assert.equal(elements.premix_sal_pct.value, '85');
     assert.equal(elements.premix_cura_pct.value, '4');
     assert.equal(elements.premix_azucar_pct.value, '11');
@@ -72,11 +86,21 @@ function includesAll(text, snippets) {
 
     elements.peso_carne.value = '20';
     context.calcular();
-    includesAll(elements.resultados.innerHTML, ['0.300', '300.0', '0.080', '80.0', '1.000', '1,000.0', '0.340', '340.0']);
+    assertResultRow(elements.resultados.innerHTML, 'Guajillo', '1.5%', '0.300', '300.0');
+    assertResultRow(elements.resultados.innerHTML, 'Pimentón', '0.4%', '0.080', '80.0');
+    assertResultRow(elements.resultados.innerHTML, 'Especias (FABPSA)', '0.6%', '0.120', '120.0');
+    assertResultRow(elements.resultados.innerHTML, 'Ajo fresco', '0.6%', '0.120', '120.0');
+    assertResultRow(elements.resultados.innerHTML, 'Agua helada (Fase 2)', '5.0%', '1.000', '1,000.0');
+    assertResultRow(elements.resultados.innerHTML, 'Premix (Fase 1)', '17.0 g/kg', '0.340', '340.0');
 
     elements.peso_carne.value = '60';
     context.calcular();
-    includesAll(elements.resultados.innerHTML, ['0.900', '900.0', '0.240', '240.0', '3.000', '3,000.0', '1.020', '1,020.0']);
+    assertResultRow(elements.resultados.innerHTML, 'Guajillo', '1.5%', '0.900', '900.0');
+    assertResultRow(elements.resultados.innerHTML, 'Pimentón', '0.4%', '0.240', '240.0');
+    assertResultRow(elements.resultados.innerHTML, 'Especias (FABPSA)', '0.6%', '0.360', '360.0');
+    assertResultRow(elements.resultados.innerHTML, 'Ajo fresco', '0.6%', '0.360', '360.0');
+    assertResultRow(elements.resultados.innerHTML, 'Agua helada (Fase 2)', '5.0%', '3.000', '3,000.0');
+    assertResultRow(elements.resultados.innerHTML, 'Premix (Fase 1)', '17.0 g/kg', '1.020', '1,020.0');
 
     elements.receta_select.value = 'viejo';
     elements.peso_carne.value = '20';

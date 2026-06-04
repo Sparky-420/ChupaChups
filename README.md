@@ -15,6 +15,18 @@ No se cambiaron los valores base de las recetas; solo se cambió la forma de cap
 
 - `1.5%` equivale al decimal original `0.015`.
 - `0.4%` equivale al decimal original `0.004`.
+- `0.6%` equivale al decimal `0.006`; **el ajo de la fórmula base es 0.6%, no 6% literal ni 0.5%**.
+
+### Fórmula base por defecto
+
+La receta seleccionada por defecto usa estos valores sobre el peso de carne limpia:
+
+- Guajillo: 1.5%
+- Pimentón: 0.4%
+- Especias/FABPSA: 0.6%
+- Ajo: **0.6%** — equivale a 120 g por cada 20 kg de carne limpia.
+- Agua: 5%
+- Premix: 1.7%, capturado en la app como `17 g/kg`.
 
 La fórmula base de premix es editable y coincide con la fórmula solicitada:
 
@@ -112,7 +124,7 @@ Para probar instalación y funcionamiento offline:
 
 ## Pruebas manuales
 
-Estos resultados sirven para verificar las fórmulas sin inventar valores nuevos. Para los lotes de carne se usa **Receta de su cagada**, agua al `5%` y dosis de premix a `17 g/kg`.
+Estos resultados sirven para verificar la fórmula base sin inventar valores nuevos. Para los lotes de carne se usa la receta seleccionada por defecto, agua al `5%` y premix al `1.7%` (`17 g/kg`). En particular, el ajo se prueba como `0.6%`: son 120 g para 20 kg y 360 g para 60 kg; no se interpreta como `6%`.
 
 ### Lote de carne de 20 kg
 
