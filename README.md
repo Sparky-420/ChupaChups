@@ -80,17 +80,46 @@ La app registra `sw.js`, que guarda en caché los archivos principales:
 
 Después de cargarla una vez desde un servidor, puede abrirse sin conexión desde el navegador/PWA instalada.
 
-## Empaquetado futuro como Android
+## Empaquetado Android con Capacitor
 
-Próximos pasos sugeridos para crear una APK sin migrar la app:
+El repositorio incluye un proyecto Android mínimo de Capacitor con el identificador `com.sparky.longaniza` y el nombre **Calculadora de Longaniza**. La compilación usa el Gradle instalado por GitHub Actions; no se versionan `gradle-wrapper.jar`, APK ni otros resultados de compilación. El proyecto Android conserva temporalmente el icono predeterminado para evitar agregar PNG binarios dentro de `android/`.
 
-1. Revisar el manifest con Lighthouse y corregir advertencias PWA.
-2. Probar instalación en Chrome Android como PWA.
-3. Usar Trusted Web Activity con Bubblewrap para generar un proyecto Android.
-4. Configurar `assetlinks.json` si se publica en un dominio propio.
-5. Generar keystore de firma Android.
-6. Compilar APK/AAB desde el proyecto generado.
-7. Probar permisos, modo offline y comportamiento de impresión en Android.
+### Generar y descargar el APK debug con GitHub Actions
+
+1. Abre el repositorio en GitHub y entra a **Actions**.
+2. Selecciona el workflow **Android debug APK**.
+3. Presiona **Run workflow**, selecciona la rama y confirma con **Run workflow**.
+4. Espera a que termine el job `build-debug-apk`.
+5. En la página de la ejecución, baja a **Artifacts** y descarga `calculadora-longaniza-debug-apk`.
+6. Descomprime el artifact para obtener `app-debug.apk`.
+
+El workflow también se ejecuta automáticamente con cada `push` a `main`. Antes de compilar, valida las fórmulas y valores predeterminados mediante `npm test`, sincroniza Capacitor y genera el APK con Gradle.
+
+### Instalar el APK debug
+
+1. Transfiere `app-debug.apk` al teléfono Android.
+2. Abre el archivo desde el teléfono.
+3. Si Android lo solicita, permite temporalmente la instalación desde esa fuente.
+4. Confirma la instalación de **Calculadora de Longaniza**.
+
+También se puede instalar desde una computadora con Android Debug Bridge:
+
+```bash
+adb install -r app-debug.apk
+```
+
+### Compilar localmente
+
+Se requiere Node.js 22, Java 21, Android SDK y Gradle 8.11.1 disponibles en el entorno:
+
+```bash
+npm install
+npm test
+npm run cap:sync
+gradle -p android assembleDebug
+```
+
+El APK local queda en `android/app/build/outputs/apk/debug/app-debug.apk` y está ignorado por Git.
 
 ## Estructura
 
@@ -101,6 +130,10 @@ app.js         # Cálculos, validaciones, localStorage y PWA
 sw.js          # Caché offline
 manifest.json  # Metadata PWA
 tests/app.test.js # Verificaciones automáticas de cálculos y robustez
+package.json      # Scripts y dependencias mínimas de Capacitor
+capacitor.config.json # AppId, nombre y directorio web para Capacitor
+android/          # Proyecto Android mínimo, sin binarios versionados
+.github/workflows/android-debug-apk.yml # Compilación y artifact APK debug
 ```
 
 ## Cómo probarla
@@ -110,7 +143,8 @@ tests/app.test.js # Verificaciones automáticas de cálculos y robustez
 Desde la raíz del proyecto ejecuta:
 
 ```bash
-node tests/app.test.js
+npm test
+npm run build
 node --check app.js
 node --check sw.js
 python3 -m json.tool manifest.json > /dev/null
