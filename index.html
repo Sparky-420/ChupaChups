@@ -3,345 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <title>Calculadora de Longaniza</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#8f1d1d">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f7f7f7;
-        }
-        h1 {
-            text-align: center;
-        }
-        .section {
-            background-color: #fff;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-        }
-        input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .notes {
-            font-size: 0.9em;
-            color: #666;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.8em;
-            color: #999;
-        }
-        
-        /* --- AÑADIDO: Estilos para impresión --- */
-        @media print {
-            /* Ocultamos todo por defecto */
-            body > * {
-                display: none;
-            }
-            
-            /* Mostramos solo la sección de resultados y su contenido */
-            #resultados, #resultados * {
-                display: block;
-            }
-            
-            /* Ajustamos el layout de impresión */
-            #resultados {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 98%; /* Un poco de margen */
-                box-shadow: none;
-                border: none;
-                margin: 0;
-                padding: 0;
-            }
-            #resultados .section {
-                box-shadow: none;
-                border: 1px solid #aaa;
-            }
-            #resultados table {
-                width: 100%;
-            }
-            #resultados th, #resultados td {
-                 border: 1px solid #666;
-            }
-        }
-        /* --- FIN de estilos para impresión --- */
-        
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Calculadora de Longaniza</h1>
-    <div class="section">
-        <h2>Selecciona la receta a calcular</h2>
-        <label for="receta_select">Receta:</label>
-        <select id="receta_select">
-            <option value="cagada">Receta de su cagada</option>
-            <option value="viejo">Receta del viejo</option>
-        </select>
-    </div>
-    <div class="section">
-        <h2>Parámetros generales</h2>
-        <label for="peso_carne">Peso de carne (kg):</label>
-        <input id="peso_carne" type="number" step="0.01" value="19.9">
-        <label for="dosis_premix">Dosis Premix (g/kg) – Fase 1:</label>
-        <input id="dosis_premix" type="number" step="0.01" value="17">
-        <label for="agua_ratio">Agua helada en Fase 2 (porcentaje, ej. 5% = 5):</label>
-        <input id="agua_ratio" type="number" step="0.1" value="5">
-    </div>
+    <header class="app-header">
+        <h1>Calculadora de Longaniza</h1>
+        <p>Calcula recetas, premix de curado y guarda tu última configuración.</p>
+    </header>
 
-    <div class="section" id="premix_calculator">
-        <h2>Calculadora de Premix de curado</h2>
-        <h3>Premix para lote de carne</h3>
-        <label for="premix_carne_kg">Carne (kg):</label>
-        <input id="premix_carne_kg" type="number" step="0.1" value="20">
-        <label for="premix_dosis">Dosis (g/kg):</label>
-        <input id="premix_dosis" type="number" step="0.1" value="14">
-        <button onclick="calcularPremixCarne()" style="margin-top:10px;">Calcular premix lote carne</button>
-        <div id="resultado_premix_carne"></div>
+    <main class="app-shell">
+        <section class="card" aria-labelledby="receta_titulo">
+            <h2 id="receta_titulo">Receta principal</h2>
 
-        <h3>Preparar lote de premix</h3>
-        <label for="premix_fabricar">Premix a fabricar (kg):</label>
-        <input id="premix_fabricar" type="number" step="0.1" value="10">
-        <button onclick="calcularFabricarPremix()" style="margin-top:10px;">Calcular ingredientes para premix</button>
-        <div id="resultado_premix_fabricar"></div>
-    </div>
-    <div class="section" id="receta_cagada">
-        <h2>Receta de su cagada</h2>
-        <label>Guajillo (decimal): <input id="tu_guajillo" type="number" step="0.001" value="0.015"></label>
-        <label>Pimentón (decimal): <input id="tu_pimenton" type="number" step="0.001" value="0.004"></label>
-        <label>Especias (FABPSA) (decimal): <input id="tu_especias" type="number" step="0.001" value="0.006"></label>
-        <label>Ajo fresco (decimal): <input id="tu_ajo" type="number" step="0.001" value="0.006"></label>
-    </div>
-    <div class="section" id="receta_viejo" style="display:none;">
-        <h2>Receta del viejo</h2>
-        <label>Guajillo (decimal): <input id="pa_guajillo" type="number" step="0.001" value="0.015"></label>
-        <label>Pimentón (decimal): <input id="pa_pimenton" type="number" step="0.001" value="0.002"></label>
-        <label>Especias (FABPSA) (decimal): <input id="pa_especias" type="number" step="0.001" value="0.004"></label>
-        <label>Ajo fresco (decimal): <input id="pa_ajo" type="number" step="0.001" value="0.005"></label>
-    </div>
-    
-    <button onclick="calcular()" style="padding:10px 20px;font-size:16px;margin-bottom:20px;">Calcular cantidades</button>
-    
-    <div id="resultados"></div>
-    
-    <button id="btn_imprimir" onclick="imprimirResultados()" style="display:none; padding:10px 20px; font-size:16px; margin: 10px 0 20px 0;">
-        🖨️ Imprimir Resultados
-    </button>
-    
-    <div class="section notes">
-        <strong>Notas:</strong>
-        <ul>
-            <li>Introduce los porcentajes como números decimales (ej. 0.05 para 5%).</li>
-            <li>La dosis de premix se aplica en la fase de curado, no en la masa final.</li>
-            <li>Ajusta el agua según la ligazón y facilidad de embutido deseada.</li>
-        </ul>
-    </div>
-    <div class="footer">
-        Calculadora de Longaniza adaptada de tu receta y de la versión de Papá.
-    </div>
+            <label for="receta_select">Selecciona la receta</label>
+            <select id="receta_select">
+                <option value="cagada">Receta de su cagada</option>
+                <option value="viejo">Receta del viejo</option>
+            </select>
 
-<script>
-function calcular() {
-    const pesoCarne = parseFloat(document.getElementById('peso_carne').value);
-    const dosisPremix = parseFloat(document.getElementById('dosis_premix').value);
-    const aguaPorcentaje = parseFloat(document.getElementById('agua_ratio').value) / 100;
-    // Determina qué receta ha sido seleccionada
-    const seleccion = document.getElementById('receta_select').value;
-    // Construye un objeto con la receta seleccionada y sus ingredientes
-    let nombreReceta;
-    let rec = {};
-    if (seleccion === 'cagada') {
-        nombreReceta = 'Receta de su cagada';
-        rec = {
-            guajillo: parseFloat(document.getElementById('tu_guajillo').value),
-            pimenton: parseFloat(document.getElementById('tu_pimenton').value),
-            especias: parseFloat(document.getElementById('tu_especias').value),
-            ajo: parseFloat(document.getElementById('tu_ajo').value)
-        };
-    } else {
-        nombreReceta = 'Receta del viejo';
-        rec = {
-            guajillo: parseFloat(document.getElementById('pa_guajillo').value),
-            pimenton: parseFloat(document.getElementById('pa_pimenton').value),
-            especias: parseFloat(document.getElementById('pa_especias').value),
-            ajo: parseFloat(document.getElementById('pa_ajo').value)
-        };
-    }
-    let html = '';
-    // Inicia la sección de resultados para la receta seleccionada
-    html += `<div class="section"><h3>${nombreReceta}</h3>`;
-    // Crea la cabecera de la tabla con columnas adicionales para litros y mililitros
-    html += '<table><tr>' +
-            '<th>Ingrediente</th>' +
-            '<th>Porcentaje</th>' +
-            '<th>Cantidad (kg)</th>' +
-            '<th>Cantidad (g)</th>' +
-            '<th>Cantidad (mg)</th>' +
-            '<th>Volumen (L)</th>' +
-            '<th>Volumen (mL)</th>' +
-            '</tr>';
-    // Ingredientes
-    for (const ingr in rec) {
-        const porcentaje = rec[ingr] || 0;
-        const kg = pesoCarne * porcentaje;
-        const g = kg * 1000;
-        const mg = g * 1000;
-        const nombreIngr = nombreIngrediente(ingr);
-        // Para ingredientes que no son agua, los equivalentes en litros y mililitros no aplican
-        const litros = '-';
-        const mililitros = '-';
-        html += `<tr>` +
-                `<td>${nombreIngr}</td>` +
-                `<td>${porcentaje.toFixed(3)}</td>` +
-                `<td>${kg.toFixed(3)}</td>` +
-                `<td>${g.toFixed(1)}</td>` +
-                `<td>${mg.toFixed(0)}</td>` +
-                `<td>${litros}</td>` +
-                `<td>${mililitros}</td>` +
-                `</tr>`;
-    }
-    // Agua helada
-    const aguaKg = pesoCarne * aguaPorcentaje;
-    const aguaG = aguaKg * 1000;
-    const aguaMg = aguaG * 1000;
-    // Agua helada se muestra con equivalentes en litros y mililitros (1 kg = 1 L, 1 g = 1 mL)
-    html += `<tr>` +
-            `<td>Agua helada (Fase 2)</td>` +
-            `<td>${aguaPorcentaje.toFixed(3)}</td>` +
-            `<td>${aguaKg.toFixed(3)}</td>` +
-            `<td>${aguaG.toFixed(1)}</td>` +
-            `<td>${aguaMg.toFixed(0)}</td>` +
-            `<td>${aguaKg.toFixed(3)}</td>` +
-            `<td>${aguaG.toFixed(1)}</td>` +
-            `</tr>`;
-    // Premix
-    const premixG = pesoCarne * dosisPremix;
-    const premixMg = premixG * 1000;
-    // Para el premix no aplican los equivalentes en volumen, por lo que se muestran guiones
-    html += `<tr>` +
-            `<td>Premix (Fase 1)</td>` +
-            `<td>${dosisPremix.toFixed(2)} g/kg</td>` +
-            `<td>-</td>` +
-            `<td>${premixG.toFixed(1)} g</td>` +
-            `<td>${premixMg.toFixed(0)} mg</td>` +
-            `<td>-</td>` +
-            `<td>-</td>` +
-            `</tr>`;
-    html += '</table></div>';
-    document.getElementById('resultados').innerHTML = html;
-    
-    // AÑADIDO: Mostrar el botón de imprimir una vez que hay resultados
-    document.getElementById('btn_imprimir').style.display = 'block';
-}
+            <div class="grid two-columns">
+                <div>
+                    <label for="peso_carne">Peso de carne (kg)</label>
+                    <input id="peso_carne" type="number" min="0" step="0.01" value="19.9" inputmode="decimal">
+                </div>
+                <div>
+                    <label for="dosis_premix">Dosis Premix Fase 1 (g/kg)</label>
+                    <input id="dosis_premix" type="number" min="0" step="0.01" value="17" inputmode="decimal">
+                </div>
+                <div>
+                    <label for="agua_ratio">Agua helada Fase 2 (%)</label>
+                    <input id="agua_ratio" type="number" min="0" step="0.1" value="5" inputmode="decimal">
+                </div>
+            </div>
 
-function nombreIngrediente(key) {
-    switch (key) {
-        case 'guajillo': return 'Guajillo';
-        case 'pimenton': return 'Pimentón';
-        case 'especias': return 'Especias (FABPSA)';
-        case 'ajo': return 'Ajo fresco';
-        default: return key;
-    }
-}
+            <div id="receta_cagada" class="recipe-fields">
+                <h3>Receta de su cagada</h3>
+                <div class="grid two-columns">
+                    <label>Guajillo (%)<input id="tu_guajillo" type="number" min="0" step="0.1" value="1.5" inputmode="decimal"></label>
+                    <label>Pimentón (%)<input id="tu_pimenton" type="number" min="0" step="0.1" value="0.4" inputmode="decimal"></label>
+                    <label>Especias (FABPSA) (%)<input id="tu_especias" type="number" min="0" step="0.1" value="0.6" inputmode="decimal"></label>
+                    <label>Ajo fresco (%)<input id="tu_ajo" type="number" min="0" step="0.1" value="0.6" inputmode="decimal"></label>
+                </div>
+            </div>
 
-// Calcula la cantidad de premix necesaria para un lote de carne y desglosa sus ingredientes
-function calcularPremixCarne() {
-    const carneKg = parseFloat(document.getElementById('premix_carne_kg').value) || 0;
-    const dosis = parseFloat(document.getElementById('premix_dosis').value) || 0;
-    // Total de premix en gramos (carne (kg) * dosis (g/kg))
-    const totalPremixG = carneKg * dosis;
-    // Composición del premix: 85% sal, 9% azúcar, 6% sal de cura
-    const sal = totalPremixG * 0.85;
-    const azucar = totalPremixG * 0.09;
-    const cura = totalPremixG * 0.06;
-    let html = '';
-    html += '<table><tr>' +
-            '<th>Concepto</th>' +
-            '<th>Cantidad (g)</th>' +
-            '</tr>';
-    html += `<tr><td>Premix total</td><td>${totalPremixG.toFixed(1)}</td></tr>`;
-    html += `<tr><td>Sal 85%</td><td>${sal.toFixed(1)}</td></tr>`;
-    html += `<tr><td>Azúcar 9%</td><td>${azucar.toFixed(1)}</td></tr>`;
-    html += `<tr><td>Sal cura 6%</td><td>${cura.toFixed(1)}</td></tr>`;
-    html += '</table>';
-    document.getElementById('resultado_premix_carne').innerHTML = html;
-}
+            <div id="receta_viejo" class="recipe-fields" hidden>
+                <h3>Receta del viejo</h3>
+                <div class="grid two-columns">
+                    <label>Guajillo (%)<input id="pa_guajillo" type="number" min="0" step="0.1" value="1.5" inputmode="decimal"></label>
+                    <label>Pimentón (%)<input id="pa_pimenton" type="number" min="0" step="0.1" value="0.2" inputmode="decimal"></label>
+                    <label>Especias (FABPSA) (%)<input id="pa_especias" type="number" min="0" step="0.1" value="0.4" inputmode="decimal"></label>
+                    <label>Ajo fresco (%)<input id="pa_ajo" type="number" min="0" step="0.1" value="0.5" inputmode="decimal"></label>
+                </div>
+            </div>
 
-// Calcula el desglose de ingredientes para fabricar un lote de premix
-function calcularFabricarPremix() {
-    const premixKg = parseFloat(document.getElementById('premix_fabricar').value) || 0;
-    // Convertir el total de premix a gramos para el desglose
-    const totalG = premixKg * 1000;
-    // Composición del premix: 85% sal de mar, 9% azúcar, 6% sal de cura
-    const sal = totalG * 0.85;
-    const azucar = totalG * 0.09;
-    const cura = totalG * 0.06;
-    let html = '';
-    html += '<table><tr>' +
-            '<th>Ingrediente</th>' +
-            '<th>Peso (g)</th>' +
-            '</tr>';
-    html += `<tr><td>Sal de mar refinada (85%)</td><td>${sal.toFixed(1)}</td></tr>`;
-    html += `<tr><td>Azúcar refinada (9%)</td><td>${azucar.toFixed(1)}</td></tr>`;
-    html += `<tr><td>Sal cura McCormick (6%)</td><td>${cura.toFixed(1)}</td></tr>`;
-    html += '</table>';
-    document.getElementById('resultado_premix_fabricar').innerHTML = html;
-}
+            <div class="actions">
+                <button id="btn_calcular" class="primary" type="button">Calcular receta</button>
+                <button id="btn_imprimir" type="button" hidden>🖨️ Imprimir resultados</button>
+                <button id="btn_restaurar" type="button">Restaurar valores por defecto</button>
+            </div>
+        </section>
 
-// AÑADIDO: Función para disparar la impresión del navegador
-function imprimirResultados() {
-    window.print();
-}
+        <section class="card" id="premix_calculator" aria-labelledby="premix_titulo">
+            <h2 id="premix_titulo">Calculadora de premix de curado</h2>
+            <p class="helper">Configura la composición del premix. La suma debe ser 100%.</p>
 
-// Listener para cambiar la visibilidad de los parámetros según la receta elegida
-document.addEventListener('DOMContentLoaded', () => {
-    const selectorReceta = document.getElementById('receta_select');
-    const divCagada = document.getElementById('receta_cagada');
-    const divViejo = document.getElementById('receta_viejo');
-    function actualizarVisibilidad() {
-        const valor = selectorReceta.value;
-        if (valor === 'cagada') {
-            divCagada.style.display = 'block';
-            divViejo.style.display = 'none';
-        } else {
-            divCagada.style.display = 'none';
-            divViejo.style.display = 'block';
-        }
-    }
-    selectorReceta.addEventListener('change', actualizarVisibilidad);
-    actualizarVisibilidad();
-});
-</script>
+            <fieldset>
+                <legend>Fórmula del premix</legend>
+                <div class="grid three-columns">
+                    <label>Sal (%)<input id="premix_sal_pct" type="number" min="0" max="100" step="0.1" value="85" inputmode="decimal"></label>
+                    <label>Sal de cura (%)<input id="premix_cura_pct" type="number" min="0" max="100" step="0.1" value="4" inputmode="decimal"></label>
+                    <label>Azúcar (%)<input id="premix_azucar_pct" type="number" min="0" max="100" step="0.1" value="11" inputmode="decimal"></label>
+                </div>
+                <p class="helper" id="premix_suma">Suma actual: 100%</p>
+            </fieldset>
+
+            <div class="grid two-columns">
+                <div>
+                    <h3>Premix para lote de carne</h3>
+                    <label for="premix_carne_kg">Carne (kg)</label>
+                    <input id="premix_carne_kg" type="number" min="0" step="0.1" value="20" inputmode="decimal">
+                    <label for="premix_dosis">Dosis (g/kg)</label>
+                    <input id="premix_dosis" type="number" min="0" step="0.1" value="14" inputmode="decimal">
+                    <button id="btn_premix_carne" type="button">Calcular premix para carne</button>
+                    <div id="resultado_premix_carne" class="results-block" aria-live="polite"></div>
+                </div>
+                <div>
+                    <h3>Preparar lote de premix</h3>
+                    <label for="premix_fabricar">Premix a fabricar (kg)</label>
+                    <input id="premix_fabricar" type="number" min="0" step="0.1" value="10" inputmode="decimal">
+                    <button id="btn_fabricar_premix" type="button">Calcular ingredientes</button>
+                    <div id="resultado_premix_fabricar" class="results-block" aria-live="polite"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card notes">
+            <h2>Notas</h2>
+            <ul>
+                <li>Los porcentajes de receta se editan como porcentaje normal: 1.5 equivale a 0.015 del peso de carne.</li>
+                <li>La dosis de premix se aplica en fase de curado, sobre kg de carne.</li>
+                <li>El agua se calcula como porcentaje del peso de carne. Para agua se usa 1 kg ≈ 1 L.</li>
+            </ul>
+        </section>
+
+        <section id="resultados" class="print-area" aria-live="polite"></section>
+    </main>
+
+    <footer class="footer">Calculadora de Longaniza adaptada de tu receta y de la versión de Papá.</footer>
+
+    <script src="app.js" defer></script>
 </body>
 </html>
