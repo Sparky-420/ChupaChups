@@ -1,4 +1,5 @@
-const STORAGE_KEY = 'longaniza-config-v2';
+const STORAGE_KEY = 'longaniza-config-v3';
+const PERCENT_TOLERANCE = 0.000001;
 
 const DEFAULTS = Object.freeze({
     receta_select: 'cagada',
@@ -16,10 +17,10 @@ const DEFAULTS = Object.freeze({
     premix_carne_kg: 20,
     premix_dosis: 14,
     premix_fabricar: 10,
-    // Se conserva la fórmula que ya usaba la app; ahora es editable.
+    // Fórmula base solicitada; el usuario puede editarla si conserva una suma de 100%.
     premix_sal_pct: 85,
-    premix_cura_pct: 6,
-    premix_azucar_pct: 9
+    premix_cura_pct: 4,
+    premix_azucar_pct: 11
 });
 
 const RECIPE_FIELDS = {
@@ -86,6 +87,10 @@ function makeTable(headers, rows) {
     return `<div class="table-wrap"><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 
+function isPremixTotalValid(total) {
+    return Math.abs(total - 100) <= PERCENT_TOLERANCE;
+}
+
 function getPremixFormula() {
     const formula = [
         { nombre: 'Sal', porcentaje: readNumber('premix_sal_pct') },
@@ -93,7 +98,7 @@ function getPremixFormula() {
         { nombre: 'Azúcar', porcentaje: readNumber('premix_azucar_pct') }
     ];
     const suma = formula.reduce((total, item) => total + item.porcentaje, 0);
-    if (Math.abs(suma - 100) > 0.01) {
+    if (!isPremixTotalValid(suma)) {
         throw new Error(`La fórmula del premix debe sumar 100%. Suma actual: ${formatPct(suma)}%.`);
     }
     return formula;
@@ -106,6 +111,9 @@ function calcular() {
         const aguaPorcentaje = readNumber('agua_ratio');
         const seleccion = el('receta_select').value;
         const receta = RECIPE_FIELDS[seleccion];
+        if (!receta) {
+            throw new Error('Selecciona una receta válida.');
+        }
         const rows = [];
 
         receta.ingredientes.forEach(([, nombre, inputId]) => {
@@ -115,12 +123,12 @@ function calcular() {
         });
 
         const aguaKg = pesoCarne * (aguaPorcentaje / 100);
-        rows.push(['Agua helada (Fase 2)', `${formatPct(aguaPorcentaje)}%`, formatKg(aguaKg), `${formatG(aguaKg * 1000)} / ${formatKg(aguaKg)} L`]);
+        rows.push(['Agua helada (Fase 2)', `${formatPct(aguaPorcentaje)}%`, formatKg(aguaKg), formatG(aguaKg * 1000)]);
 
         const premixG = pesoCarne * dosisPremix;
         rows.push(['Premix (Fase 1)', `${formatG(dosisPremix)} g/kg`, formatKg(premixG / 1000), formatG(premixG)]);
 
-        el('resultados').innerHTML = `<section class="card print-card"><h2>Resultados: ${receta.nombre}</h2>${makeTable(['Ingrediente', 'Porcentaje o dosis', 'Kilogramos', 'Gramos'], rows)}</section>`;
+        el('resultados').innerHTML = `<section class="card print-card"><h2>Resultados: ${receta.nombre}</h2><p class="print-summary"><strong>Lote de carne:</strong> ${formatKg(pesoCarne)} kg · <strong>Agua:</strong> ${formatPct(aguaPorcentaje)}% · <strong>Premix:</strong> ${formatG(dosisPremix)} g/kg</p>${makeTable(['Ingrediente', 'Porcentaje o dosis', 'Kilogramos', 'Gramos'], rows)}</section>`;
         el('btn_imprimir').hidden = false;
         saveConfig();
     } catch (error) {
@@ -176,21 +184,55 @@ function saveConfig() {
     ids.forEach((id) => {
         config[id] = el(id).value;
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    } catch (error) {
+        console.warn('No se pudo guardar la configuración local.', error);
+    }
+}
+
+function getSafeSavedConfig() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (error) {
+        console.warn('Se ignoró una configuración local inválida.', error);
+        return {};
+    }
+}
+
+function isValidSavedValue(id, value) {
+    if (id === 'receta_select') return Object.prototype.hasOwnProperty.call(RECIPE_FIELDS, value);
+    if (value === '' || (typeof value !== 'string' && typeof value !== 'number')) return false;
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) && numericValue >= 0;
 }
 
 function loadConfig() {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const saved = getSafeSavedConfig();
     ids.forEach((id) => {
-        el(id).value = saved[id] ?? DEFAULTS[id];
+        el(id).value = isValidSavedValue(id, saved[id]) ? saved[id] : DEFAULTS[id];
     });
+
+    const premixSum = ['premix_sal_pct', 'premix_cura_pct', 'premix_azucar_pct']
+        .reduce((total, id) => total + Number(el(id).value), 0);
+    if (!isPremixTotalValid(premixSum)) {
+        ['premix_sal_pct', 'premix_cura_pct', 'premix_azucar_pct'].forEach((id) => {
+            el(id).value = DEFAULTS[id];
+        });
+    }
 }
 
 function restoreDefaults() {
     ids.forEach((id) => {
         el(id).value = DEFAULTS[id];
     });
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+        console.warn('No se pudo borrar la configuración local.', error);
+    }
     actualizarVisibilidad();
     actualizarSumaPremix();
     el('resultados').innerHTML = '';
@@ -205,7 +247,7 @@ function actualizarSumaPremix() {
         .reduce((total, value) => total + value, 0);
     const target = el('premix_suma');
     target.textContent = `Suma actual: ${formatPct(suma)}%`;
-    target.classList.toggle('error', Math.abs(suma - 100) > 0.01);
+    target.classList.toggle('error', !isPremixTotalValid(suma));
 }
 
 function imprimirResultados() {
@@ -214,7 +256,7 @@ function imprimirResultados() {
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch((error) => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).catch((error) => {
             console.warn('No se pudo registrar el service worker.', error);
         });
     }
