@@ -23,8 +23,14 @@ jobs:
       - name: Validate formulas and defaults
         run: npm test
 
-      - name: Sync Capacitor Android project
-        run: npm run cap:sync
+      - name: Build web assets
+        run: npm run build
+
+      - name: Copy web assets into Android
+        run: |
+          rm -rf android/app/src/main/assets/public
+          mkdir -p android/app/src/main/assets/public
+          cp -R dist/. android/app/src/main/assets/public/
 
       - name: Set up Java
         uses: actions/setup-java@v4

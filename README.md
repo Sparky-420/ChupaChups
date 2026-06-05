@@ -80,9 +80,11 @@ La app registra `sw.js`, que guarda en caché los archivos principales:
 
 Después de cargarla una vez desde un servidor, puede abrirse sin conexión desde el navegador/PWA instalada.
 
-## Empaquetado Android con Capacitor
+## Empaquetado Android con WebView local
 
-El repositorio incluye un proyecto Android mínimo de Capacitor con el identificador `com.sparky.longaniza` y el nombre **Calculadora de Longaniza**. La compilación usa el Gradle instalado por GitHub Actions; no se versionan `gradle-wrapper.jar`, APK ni otros resultados de compilación. El proyecto Android conserva temporalmente el icono predeterminado para evitar agregar PNG binarios dentro de `android/`.
+El repositorio incluye un proyecto Android mínimo que no usa Capacitor ni Cordova. El APK debug abre un `WebView` nativo con los archivos web copiados a `android/app/src/main/assets/public/` y carga `file:///android_asset/public/index.html`. El identificador Android se mantiene como `com.sparky.longaniza` y el nombre visible es **Calculadora de Longaniza**.
+
+La compilación usa el Gradle instalado por GitHub Actions; no se versionan `gradle-wrapper.jar`, APK ni otros resultados de compilación. El proyecto Android conserva el icono predeterminado para evitar agregar PNG binarios dentro de `android/`.
 
 ### Generar y descargar el APK debug con GitHub Actions
 
@@ -93,7 +95,7 @@ El repositorio incluye un proyecto Android mínimo de Capacitor con el identific
 5. En la página de la ejecución, baja a **Artifacts** y descarga `calculadora-longaniza-debug-apk`.
 6. Descomprime el artifact para obtener `app-debug.apk`.
 
-El workflow también se ejecuta automáticamente con cada `push` a `main`. Antes de compilar, valida las fórmulas y valores predeterminados mediante `npm test`, sincroniza Capacitor y genera el APK con Gradle.
+El workflow también se ejecuta automáticamente con cada `push` a `main`. Antes de compilar, ejecuta `npm install`, valida las fórmulas con `npm test`, genera `dist/` con `npm run build`, copia esos archivos a los assets Android y genera el APK con `gradle -p android assembleDebug`.
 
 ### Instalar el APK debug
 
@@ -115,7 +117,7 @@ Se requiere Node.js 22, Java 21, Android SDK y Gradle 8.11.1 disponibles en el e
 ```bash
 npm install
 npm test
-npm run cap:sync
+npm run android:assets
 gradle -p android assembleDebug
 ```
 
@@ -130,9 +132,8 @@ app.js         # Cálculos, validaciones, localStorage y PWA
 sw.js          # Caché offline
 manifest.json  # Metadata PWA
 tests/app.test.js # Verificaciones automáticas de cálculos y robustez
-package.json      # Scripts y dependencias mínimas de Capacitor
-capacitor.config.json # AppId, nombre y directorio web para Capacitor
-android/          # Proyecto Android mínimo, sin binarios versionados
+package.json      # Scripts sin dependencias nativas
+android/          # Proyecto Android WebView mínimo, sin binarios versionados
 .github/workflows/android-debug-apk.yml # Compilación y artifact APK debug
 ```
 
