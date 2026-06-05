@@ -23,8 +23,13 @@ jobs:
       - name: Validate formulas and defaults
         run: npm test
 
+      - name: Clean stale Cordova framework jars
+        run: rm -f android/app/libs/framework.jar android/app/libs/framework-*.jar
+
       - name: Sync Capacitor Android project
-        run: npm run cap:sync
+        run: |
+          npm run build
+          npx cap sync android
 
       - name: Set up Java
         uses: actions/setup-java@v4
